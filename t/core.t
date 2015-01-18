@@ -25,12 +25,12 @@ plan tests => $numtests;
 my $expected_peer = do {
     my $us = IO::Socket::INET->new( LocalAddr => '127.0.0.1', Proto => 'udp' );
     my $uc = IO::Socket::INET->new( 
-	PeerAddr => $us->sockhost,
-	PeerPort => $us->sockport,
-	Proto => 'udp'
+        PeerAddr => $us->sockhost,
+        PeerPort => $us->sockport,
+        Proto => 'udp'
     ) or do {
-	print "1..0 # Skipped: cannot determine default peer IP\n";
-	exit
+        print "1..0 # Skipped: cannot determine default peer IP\n";
+        exit
     };
     $uc->sockhost,
 };
@@ -67,7 +67,6 @@ ok( fileno( $server), "Server Fileno Check");
 
 my $saddr = $server->sockhost.':'.$server->sockport;
 
-
 unless (fork) {
     close $server;
     my $client = IO::Socket::INET->new($saddr);
@@ -77,25 +76,25 @@ unless (fork) {
     close $client;
 
     $client = IO::Socket::SSL->new(
-	PeerAddr => $saddr,
-	SSL_verify_mode => 0x01,
-	SSL_ca_file => "certs/test-ca.pem",
-	SSL_use_cert => 1,
-	SSL_cert_file => "certs/server-cert.pem",
-	SSL_version => 'TLSv1',
-	SSL_cipher_list => 'HIGH',
-	SSL_key_file => "certs/server-key.enc",
-	SSL_passwd_cb => sub { return "bluebell" },
-	SSL_verify_callback => \&verify_sub,
+        PeerAddr => $saddr,
+        SSL_verify_mode => 0x01,
+        SSL_ca_file => "certs/test-ca.pem",
+        SSL_use_cert => 1,
+        SSL_cert_file => "certs/server-cert.pem",
+        SSL_version => 'TLSv1',
+        SSL_cipher_list => 'HIGH',
+        SSL_key_file => "certs/server-key.enc",
+        SSL_passwd_cb => sub { return "bluebell" },
+        SSL_verify_callback => \&verify_sub,
     );
 
 
     sub verify_sub {
-	my ($ok, $ctx_store, $cert, $error) = @_;
-	unless ($ok && $ctx_store && $cert && !$error)
-    { BAIL_OUT("not ok #client failure\n"); }
-    like( $cert, qr/IO::Socket::SSL Demo CA/, "Client Verify-sub Check");
-	return 1;
+        my ($ok, $ctx_store, $cert, $error) = @_;
+        unless ($ok && $ctx_store && $cert && !$error)
+        { BAIL_OUT("not ok #client failure\n"); }
+        like( $cert, qr/IO::Socket::SSL Demo CA/, "Client Verify-sub Check");
+        return 1;
     }
 
 
@@ -116,13 +115,15 @@ unless (fork) {
     $client->syswrite('00waaaanf00', 7, 2);
 
     if ($CAN_PEEK) {
-	my $buffer;
-	$client->read($buffer,2);
-       like( $buffer, qr/ok/, "Client Peek Check");
+        my $buffer;
+        $client->read($buffer,2);
+        like( $buffer, qr/ok/, "Client Peek Check");
     }
 
     $client->print("Test\n");
-    $client->printf("\$%.2f\n%d\n%c\n%s", 1.0444442342, 4.0, ord("y"), "Test\nBeaver\nBeaver\n");
+    $client->printf("\$%.2f\n%d\n%c\n%s",
+                    1.0444442342, 4.0, ord("y"),
+                    "Test\nBeaver\nBeaver\n");
     shutdown($client, 1);
 
     my $buffer="\0\0aaaaaaaaaaaaaaaaaaaa";
@@ -162,7 +163,7 @@ unless (fork) {
     ok( $client_2, "Second Client Initialization");
 
     $client_2 = IO::Socket::SSL->new_from_fd($client_2->fileno, '+<>',
-					     SSL_reuse_ctx => $client);
+                                             SSL_reuse_ctx => $client);
     ok( $client_2, "Client Init from Fileno Check");
     $buffer = <$client_2>;
 
@@ -170,29 +171,29 @@ unless (fork) {
     $client_2->close(SSL_ctx_free => 1);
 
     if ($CAN_NONBLOCK) {
-	my $client_3 = IO::Socket::SSL->new(
-	    PeerAddr => $saddr,
-	    SSL_verify_mode => 0x01,
-	    SSL_version => 'TLSv1',
-	    SSL_cipher_list => 'HIGH',
-	    SSL_ca_file => "certs/test-ca.pem",
-	    SSL_use_cert => 1,
-	    SSL_cert_file => "certs/server-cert.pem",
-	    SSL_key_file => "certs/server-key.enc",
-	    SSL_passwd_cb => sub { return "bluebell" },
-	    Blocking => 0,
-	);
+        my $client_3 = IO::Socket::SSL->new(
+            PeerAddr => $saddr,
+            SSL_verify_mode => 0x01,
+            SSL_version => 'TLSv1',
+            SSL_cipher_list => 'HIGH',
+            SSL_ca_file => "certs/test-ca.pem",
+            SSL_use_cert => 1,
+            SSL_cert_file => "certs/server-cert.pem",
+            SSL_key_file => "certs/server-key.enc",
+            SSL_passwd_cb => sub { return "bluebell" },
+            Blocking => 0,
+            );
 
-       ok( $client_3, "Client Nonblocking Check 1");
-	close $client_3;
+        ok( $client_3, "Client Nonblocking Check 1");
+        close $client_3;
 
-	my $client_4 = IO::Socket::SSL->new(
-	    PeerAddr => $saddr,
-	    SSL_reuse_ctx => $client_3,
-	    Blocking => 0
-	);
-       ok( $client_4, "Client Nonblocking Check 2");
-	$client_3->close(SSL_ctx_free => 1);
+        my $client_4 = IO::Socket::SSL->new(
+            PeerAddr => $saddr,
+            SSL_reuse_ctx => $client_3,
+            Blocking => 0
+            );
+        ok( $client_4, "Client Nonblocking Check 2");
+        $client_3->close(SSL_ctx_free => 1);
     }
 
     exit(0);
